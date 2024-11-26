@@ -19,3 +19,7 @@ build/
 # Ignorar archivos archivos de excel
 .xlsx/
 *.xlsx
+
+# txt
+*.txt
+.txt/
