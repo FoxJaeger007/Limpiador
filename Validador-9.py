@@ -5,6 +5,32 @@ import sys
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side
 
+def apply_styles(ws, min_row, max_row, min_col, max_col, bold=False):
+    border = Border(left=Side(style='thin'),
+                    right=Side(style='thin'),
+                    top=Side(style='thin'),
+                    bottom=Side(style='thin'))
+    for row in ws.iter_rows(min_row=min_row, max_row=max_row, min_col=min_col, max_col=max_col):
+        for cell in row:
+            if bold:
+                cell.font = Font(bold=True)
+            cell.border = border
+
+def auto_adjust_column_width(ws, exclude_first_col=True):
+    for col in ws.columns:
+        if exclude_first_col and col[0].column_letter == 'A':
+            continue
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = max_length + 5
+        ws.column_dimensions[column].width = adjusted_width
+
 def log_null_data(df, ws, excel_filename):
     ws.append(["***** Procesando archivo: {} *****".format(excel_filename)])
 
@@ -13,28 +39,17 @@ def log_null_data(df, ws, excel_filename):
     ws.append([])
     ws.append(["Datos nulos por columna:"])
 
-    # Definir el borde
-    border = Border(left=Side(style='thin'),
-                    right=Side(style='thin'),
-                    top=Side(style='thin'),
-                    bottom=Side(style='thin'))
-
     # Aplicar negrilla a los títulos de las tablas inmediatamente y agregar bordes
-    for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=2):
-        for cell in row:
-            cell.font = Font(bold=True)
-            cell.border = border
+    apply_styles(ws, ws.max_row, ws.max_row, 1, 2, bold=True)
 
     # Detalle de datos nulos con bordes
     for column, count in null_data.items():
         ws.append([column, count])
-        for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=2):
-            for cell in row:
-                cell.border = border
+        apply_styles(ws, ws.max_row, ws.max_row, 1, 2)
 
     # Ajustar el ancho de la columna A según el contenido de los datos nulos, excluyendo la primera fila
     max_length = 0
-    for cell in ws['A'][1:]:  # Excluir la primera fila
+    for cell in ws['A'][1:]:
         try:
             if len(str(cell.value)) > max_length:
                 max_length = len(cell.value)
@@ -43,7 +58,6 @@ def log_null_data(df, ws, excel_filename):
     adjusted_width = max_length + 2
     ws.column_dimensions['A'].width = adjusted_width
 
-    # Añadir un espacio antes de cada nueva sección
     ws.append([])
     ws.append([])
 
@@ -53,41 +67,24 @@ def log_null_data(df, ws, excel_filename):
         ws.append(["Detalle de filas con datos nulos:"])
         headers = list(null_rows.columns)
         ws.append(headers)
-        
-        # Aplicar negrilla y bordes a los encabezados
-        for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=len(headers)):
-            for cell in row:
-                cell.font = Font(bold=True)
-                cell.border = border
-
-        # Añadir las filas con datos nulos
+        apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers), bold=True)
         for row in null_rows.itertuples(index=False):
             ws.append(list(row))
-            for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=len(headers)):
-                for cell in row:
-                    cell.border = border
+            apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers))
 
-    ws.append([])  # Añadir una línea en blanco al final de cada hoja para claridad
+    ws.append([])
+
+    # Autoajustar el ancho de las columnas, exceptuando la primera columna
+    auto_adjust_column_width(ws)
 
 def log_duplicate_data(df, ws, column_prefix):
-    # Definir el borde
-    border = Border(left=Side(style='thin'),
-                    right=Side(style='thin'),
-                    top=Side(style='thin'),
-                    bottom=Side(style='thin'))
-
     # Encontrar columnas con el prefijo especificado
     columns_with_prefix = [col for col in df.columns if col.startswith(column_prefix)]
     ws.append(["Columnas con el prefijo '{}'".format(column_prefix)])
-    for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=1):
-        for cell in row:
-            cell.font = Font(bold=True)
-            cell.border = border
+    apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
 
     ws.append(columns_with_prefix)
-    for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=len(columns_with_prefix)):
-        for cell in row:
-            cell.border = border
+    apply_styles(ws, ws.max_row, ws.max_row, 1, len(columns_with_prefix))
 
     for column_name in columns_with_prefix:
         df[column_name] = df[column_name].astype(str).str.lower()
@@ -96,50 +93,26 @@ def log_duplicate_data(df, ws, column_prefix):
         # Registro de datos duplicados en cada columna con el prefijo
         duplicate_data = df.duplicated(subset=[column_name]).sum()
         ws.append(["Número de filas duplicadas en la columna '{}': {}".format(column_name, duplicate_data)])
-        for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=1):
-            for cell in row:
-                cell.font = Font(bold=True)
-                cell.border = border
+        apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
 
         if duplicate_data > 0:
             ws.append(["Filas duplicadas en la columna '{}':".format(column_name)])
-            for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=1):
-                for cell in row:
-                    cell.font = Font(bold=True)
-                    cell.border = border
+            apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
 
             duplicated_rows = df[df.duplicated(subset=[column_name], keep=False)]
 
             headers = list(duplicated_rows.columns)
             ws.append(headers)
-
-            # Aplicar negrilla y bordes a los encabezados de las columnas duplicadas
-            for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=len(headers)):
-                for cell in row:
-                    cell.font = Font(bold=True)
-                    cell.border = border
+            apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers), bold=True)
 
             for row in duplicated_rows.itertuples(index=False):
                 ws.append(list(row))
-                for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=len(headers)):
-                    for cell in row:
-                        cell.border = border
+                apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers))
 
-    ws.append([])  # Añadir una línea en blanco al final de cada hoja para claridad
+    ws.append([])
 
     # Autoajustar el ancho de las columnas, exceptuando la primera columna
-    for col in ws.columns:
-        if col[0].column_letter != 'A':  # Exceptuar la primera columna
-            max_length = 0
-            column = col[0].column_letter  # Obtener la letra de la columna
-            for cell in col:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(cell.value)
-                except:
-                    pass
-            adjusted_width = max_length + 5
-            ws.column_dimensions[column].width = adjusted_width
+    auto_adjust_column_width(ws)
 
 def process_excel_files_in_folder(folder_path, column_prefix, output_excel_filename):
     excel_files = [f for f in os.listdir(folder_path) if f.endswith('.xlsx') or f.endswith('.xls')]
