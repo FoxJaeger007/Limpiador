@@ -5,7 +5,7 @@ import sys
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side
 
-def log_null_and_duplicate_data(df, ws, excel_filename, column_prefix):
+def log_null_data(df, ws, excel_filename):
     ws.append(["***** Procesando archivo: {} *****".format(excel_filename)])
 
     # Registro de datos nulos
@@ -13,12 +13,13 @@ def log_null_and_duplicate_data(df, ws, excel_filename, column_prefix):
     ws.append([])
     ws.append(["Datos nulos por columna:"])
 
-    # Aplicar negrilla a los títulos de las tablas inmediatamente y agregar bordes
+    # Definir el borde
     border = Border(left=Side(style='thin'),
                     right=Side(style='thin'),
                     top=Side(style='thin'),
                     bottom=Side(style='thin'))
 
+    # Aplicar negrilla a los títulos de las tablas inmediatamente y agregar bordes
     for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=2):
         for cell in row:
             cell.font = Font(bold=True)
@@ -45,6 +46,13 @@ def log_null_and_duplicate_data(df, ws, excel_filename, column_prefix):
     # Añadir un espacio antes de cada nueva sección
     ws.append([])
     ws.append([])
+
+def log_duplicate_data(df, ws, column_prefix):
+    # Definir el borde
+    border = Border(left=Side(style='thin'),
+                    right=Side(style='thin'),
+                    top=Side(style='thin'),
+                    bottom=Side(style='thin'))
 
     # Encontrar columnas con el prefijo especificado
     columns_with_prefix = [col for col in df.columns if col.startswith(column_prefix)]
@@ -108,7 +116,7 @@ def log_null_and_duplicate_data(df, ws, excel_filename, column_prefix):
                         max_length = len(cell.value)
                 except:
                     pass
-            adjusted_width = max_length + 2
+            adjusted_width = max_length + 5
             ws.column_dimensions[column].width = adjusted_width
 
 def process_excel_files_in_folder(folder_path, column_prefix, output_excel_filename):
@@ -131,7 +139,8 @@ def process_excel_files_in_folder(folder_path, column_prefix, output_excel_filen
 
             ws = wb.create_sheet(title=sheet_name)
 
-            log_null_and_duplicate_data(df, ws, excel_file, column_prefix)
+            log_null_data(df, ws, excel_file)
+            log_duplicate_data(df, ws, column_prefix)
 
             print(f"Registro completado para '{excel_file}'. Revisa el archivo '{output_excel_filename}' para los detalles.")
         except FileNotFoundError:
