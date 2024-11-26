@@ -1,0 +1,20 @@
+# Ignorar archivos de configuración del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Ignorar dependencias de Node.js
+node_modules/
+
+# Ignorar archivos de registro
+*.log
+
+# Ignorar archivos de compilación
+dist/
+build/
+
+# Ignorar archivos de configuración del editor
+.vscode/
+
+
+# Ignorar archivos archivos de excel
+.xlsx/
