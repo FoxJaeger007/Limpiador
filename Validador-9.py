@@ -85,14 +85,14 @@ def log_null_data(df, ws, excel_filename):
     # Autoajustar el ancho de las columnas, exceptuando la primera columna
     auto_adjust_column_width(ws)
 
-def log_duplicate_data(df, ws, column_prefix):
+def log_duplicate_data(df, ws, duplicate_column_prefix):
     if df.empty:
         ws.append(["El DataFrame está vacío."])
         return
 
     # Encontrar columnas con el prefijo especificado
-    columns_with_prefix = [col for col in df.columns if col.startswith(column_prefix)]
-    ws.append(["Columnas con el prefijo '{}'".format(column_prefix)])
+    columns_with_prefix = [col for col in df.columns if col.startswith(duplicate_column_prefix)]
+    ws.append(["Columnas con el prefijo '{}'".format(duplicate_column_prefix)])
     apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
 
     ws.append(columns_with_prefix)
@@ -126,7 +126,45 @@ def log_duplicate_data(df, ws, column_prefix):
     # Autoajustar el ancho de las columnas, exceptuando la primera columna
     auto_adjust_column_width(ws)
 
-def process_excel_files_in_folder(folder_path, column_prefix, output_excel_filename):
+def log_numeric_data(df, ws, numeric_column_prefix):
+    if df.empty:
+        ws.append(["El DataFrame está vacío."])
+        return
+
+    # Encontrar columnas con el prefijo especificado
+    columns_with_prefix = [col for col in df.columns if col.startswith(numeric_column_prefix)]
+    ws.append(["Columnas con el prefijo '{}' que deben contener datos numéricos".format(numeric_column_prefix)])
+    apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
+
+    ws.append(columns_with_prefix)
+    apply_styles(ws, ws.max_row, ws.max_row, 1, len(columns_with_prefix))
+
+    for column_name in columns_with_prefix:
+        ws.append([])
+
+        # Verificar si la columna contiene solo datos numéricos
+        non_numeric_data = df[~df[column_name].apply(lambda x: pd.to_numeric(x, errors='coerce')).notnull()]
+        ws.append(["Número de filas con datos no numéricos en la columna '{}': {}".format(column_name, len(non_numeric_data))])
+        apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
+
+        if not non_numeric_data.empty:
+            ws.append(["Filas con datos no numéricos en la columna '{}':".format(column_name)])
+            apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
+
+            headers = list(non_numeric_data.columns)
+            ws.append(headers)
+            apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers), bold=True)
+
+            for row in non_numeric_data.itertuples(index=False):
+                ws.append(list(row))
+                apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers))
+
+    ws.append([])
+
+    # Autoajustar el ancho de las columnas, exceptuando la primera columna
+    auto_adjust_column_width(ws)
+
+def process_excel_files_in_folder(folder_path, duplicate_column_prefix, numeric_column_prefix, output_excel_filename):
     excel_files = [f for f in os.listdir(folder_path) if f.endswith('.xlsx') or f.endswith('.xls')]
 
     if not excel_files:
@@ -147,7 +185,8 @@ def process_excel_files_in_folder(folder_path, column_prefix, output_excel_filen
             ws = wb.create_sheet(title=sheet_name)
 
             log_null_data(df, ws, excel_file)
-            log_duplicate_data(df, ws, column_prefix)
+            log_duplicate_data(df, ws, duplicate_column_prefix)
+            log_numeric_data(df, ws, numeric_column_prefix)
 
             print(f"Registro completado para '{excel_file}'. Revisa el archivo '{output_excel_filename}' para los detalles.")
         except FileNotFoundError:
@@ -158,19 +197,20 @@ def process_excel_files_in_folder(folder_path, column_prefix, output_excel_filen
     wb.save(output_excel_filename)
 
 def main():
-    if len(sys.argv) < 4:
-        print("Uso: python programa.py carpeta_de_excel archivo_salida prefijo")
+    if len(sys.argv) < 5:
+        print("Uso: python programa.py carpeta_de_excel archivo_salida prefijo_duplicados prefijo_numericos")
         sys.exit(1)
 
     folder_path = sys.argv[1]
     output_excel_filename = sys.argv[2]
-    column_prefix = sys.argv[3]
+    duplicate_column_prefix = sys.argv[3]
+    numeric_column_prefix = sys.argv[4]
 
     if not os.path.isdir(folder_path):
         print(f"Error: La carpeta '{folder_path}' no existe o no es un directorio.")
         sys.exit(1)
 
-    process_excel_files_in_folder(folder_path, column_prefix, output_excel_filename)
+    process_excel_files_in_folder(folder_path, duplicate_column_prefix, numeric_column_prefix, output_excel_filename)
 
 if __name__ == "__main__":
     main()
