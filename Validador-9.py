@@ -32,6 +32,10 @@ def auto_adjust_column_width(ws, exclude_first_col=True):
         ws.column_dimensions[column].width = adjusted_width
 
 def log_null_data(df, ws, excel_filename):
+    if df.empty:
+        ws.append(["El DataFrame está vacío."])
+        return
+
     ws.append(["***** Procesando archivo: {} *****".format(excel_filename)])
 
     # Registro de datos nulos
@@ -66,9 +70,8 @@ def log_null_data(df, ws, excel_filename):
     if not null_rows.empty:
         ws.append(["Detalle de filas con datos nulos:"])
 
-        # Aplicar negrilla al titulo detall de filas con datos nulos
+        # Aplicar negrilla al título "Detalle de filas con datos nulos"
         apply_styles(ws, ws.max_row, ws.max_row, 1, 2, bold=True)
-
 
         headers = list(null_rows.columns)
         ws.append(headers)
@@ -83,6 +86,10 @@ def log_null_data(df, ws, excel_filename):
     auto_adjust_column_width(ws)
 
 def log_duplicate_data(df, ws, column_prefix):
+    if df.empty:
+        ws.append(["El DataFrame está vacío."])
+        return
+
     # Encontrar columnas con el prefijo especificado
     columns_with_prefix = [col for col in df.columns if col.startswith(column_prefix)]
     ws.append(["Columnas con el prefijo '{}'".format(column_prefix)])
