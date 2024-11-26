@@ -47,6 +47,28 @@ def log_null_data(df, ws, excel_filename):
     ws.append([])
     ws.append([])
 
+    # Generar listado de filas con datos nulos
+    null_rows = df[df.isnull().any(axis=1)]
+    if not null_rows.empty:
+        ws.append(["Detalle de filas con datos nulos:"])
+        headers = list(null_rows.columns)
+        ws.append(headers)
+        
+        # Aplicar negrilla y bordes a los encabezados
+        for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=len(headers)):
+            for cell in row:
+                cell.font = Font(bold=True)
+                cell.border = border
+
+        # Añadir las filas con datos nulos
+        for row in null_rows.itertuples(index=False):
+            ws.append(list(row))
+            for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=len(headers)):
+                for cell in row:
+                    cell.border = border
+
+    ws.append([])  # Añadir una línea en blanco al final de cada hoja para claridad
+
 def log_duplicate_data(df, ws, column_prefix):
     # Definir el borde
     border = Border(left=Side(style='thin'),
