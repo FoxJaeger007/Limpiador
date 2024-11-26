@@ -5,7 +5,7 @@ import sys
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side
 
-def log_null_and_duplicate_data(df, ws, excel_filename, column_prefixes):
+def log_null_and_duplicate_data(df, ws, excel_filename, column_prefix):
     ws.append(["***** Procesando archivo: {} *****".format(excel_filename)])
 
     # Registro de datos nulos
@@ -14,9 +14,9 @@ def log_null_and_duplicate_data(df, ws, excel_filename, column_prefixes):
     ws.append(["Datos nulos por columna:"])
 
     # Aplicar negrilla a los títulos de las tablas inmediatamente y agregar bordes
-    border = Border(left=Side(style='thin'), 
-                    right=Side(style='thin'), 
-                    top=Side(style='thin'), 
+    border = Border(left=Side(style='thin'),
+                    right=Side(style='thin'),
+                    top=Side(style='thin'),
                     bottom=Side(style='thin'))
 
     for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=2):
@@ -46,24 +46,24 @@ def log_null_and_duplicate_data(df, ws, excel_filename, column_prefixes):
     ws.append([])
     ws.append([])
 
-    # Encontrar columnas con los prefijos especificados
-    columns_with_prefixes = [col for col in df.columns if any(col.startswith(prefix) for prefix in column_prefixes)]
-    ws.append(["Columnas con los prefijos '{}'".format(', '.join(column_prefixes))])
+    # Encontrar columnas con el prefijo especificado
+    columns_with_prefix = [col for col in df.columns if col.startswith(column_prefix)]
+    ws.append(["Columnas con el prefijo '{}'".format(column_prefix)])
     for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=1):
         for cell in row:
             cell.font = Font(bold=True)
             cell.border = border
 
-    ws.append(columns_with_prefixes)
-    for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=len(columns_with_prefixes)):
+    ws.append(columns_with_prefix)
+    for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=len(columns_with_prefix)):
         for cell in row:
             cell.border = border
 
-    for column_name in columns_with_prefixes:
+    for column_name in columns_with_prefix:
         df[column_name] = df[column_name].astype(str).str.lower()
         ws.append([])
 
-        # Registro de datos duplicados en cada columna con los prefijos
+        # Registro de datos duplicados en cada columna con el prefijo
         duplicate_data = df.duplicated(subset=[column_name]).sum()
         ws.append(["Número de filas duplicadas en la columna '{}': {}".format(column_name, duplicate_data)])
         for row in ws.iter_rows(min_row=ws.max_row, max_row=ws.max_row, min_col=1, max_col=1):
@@ -111,7 +111,7 @@ def log_null_and_duplicate_data(df, ws, excel_filename, column_prefixes):
             adjusted_width = max_length + 2
             ws.column_dimensions[column].width = adjusted_width
 
-def process_excel_files_in_folder(folder_path, column_prefixes, output_excel_filename):
+def process_excel_files_in_folder(folder_path, column_prefix, output_excel_filename):
     excel_files = [f for f in os.listdir(folder_path) if f.endswith('.xlsx') or f.endswith('.xls')]
 
     if not excel_files:
@@ -131,7 +131,7 @@ def process_excel_files_in_folder(folder_path, column_prefixes, output_excel_fil
 
             ws = wb.create_sheet(title=sheet_name)
 
-            log_null_and_duplicate_data(df, ws, excel_file, column_prefixes)
+            log_null_and_duplicate_data(df, ws, excel_file, column_prefix)
 
             print(f"Registro completado para '{excel_file}'. Revisa el archivo '{output_excel_filename}' para los detalles.")
         except FileNotFoundError:
@@ -143,18 +143,18 @@ def process_excel_files_in_folder(folder_path, column_prefixes, output_excel_fil
 
 def main():
     if len(sys.argv) < 4:
-        print("Uso: python programa.py carpeta_de_excel archivo_salida prefijo1 [prefijo2 ... prefijoN]")
+        print("Uso: python programa.py carpeta_de_excel archivo_salida prefijo")
         sys.exit(1)
 
     folder_path = sys.argv[1]
     output_excel_filename = sys.argv[2]
-    column_prefixes = sys.argv[3:]
+    column_prefix = sys.argv[3]
 
     if not os.path.isdir(folder_path):
         print(f"Error: La carpeta '{folder_path}' no existe o no es un directorio.")
         sys.exit(1)
 
-    process_excel_files_in_folder(folder_path, column_prefixes, output_excel_filename)
+    process_excel_files_in_folder(folder_path, column_prefix, output_excel_filename)
 
 if __name__ == "__main__":
     main()
