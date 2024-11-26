@@ -65,6 +65,11 @@ def log_null_data(df, ws, excel_filename):
     null_rows = df[df.isnull().any(axis=1)]
     if not null_rows.empty:
         ws.append(["Detalle de filas con datos nulos:"])
+
+        # Aplicar negrilla al titulo detall de filas con datos nulos
+        apply_styles(ws, ws.max_row, ws.max_row, 1, 2, bold=True)
+
+
         headers = list(null_rows.columns)
         ws.append(headers)
         apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers), bold=True)
