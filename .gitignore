@@ -27,3 +27,9 @@ build/
 # Ejecutables
 *.exe
 .exe/
+
+
+.gitignore/
+*.gitignore
+.spec/
+*.spec
