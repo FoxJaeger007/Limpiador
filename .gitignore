@@ -23,3 +23,7 @@ build/
 # txt
 *.txt
 .txt/
+
+# Ejecutables
+*.exe
+.exe/
