@@ -85,86 +85,86 @@ def log_null_data(df, ws, excel_filename):
     # Autoajustar el ancho de las columnas, exceptuando la primera columna
     auto_adjust_column_width(ws)
 
-def log_duplicate_data(df, ws, duplicate_column_prefix):
+def log_duplicate_data(df, ws, duplicate_column_prefixes):
     if df.empty:
         ws.append(["El DataFrame está vacío."])
         return
 
-    # Encontrar columnas con el prefijo especificado
-    columns_with_prefix = [col for col in df.columns if col.startswith(duplicate_column_prefix)]
-    ws.append(["Columnas con el prefijo '{}'".format(duplicate_column_prefix)])
-    apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
-
-    ws.append(columns_with_prefix)
-    apply_styles(ws, ws.max_row, ws.max_row, 1, len(columns_with_prefix))
-
-    for column_name in columns_with_prefix:
-        df[column_name] = df[column_name].astype(str).str.lower()
-        ws.append([])
-
-        # Registro de datos duplicados en cada columna con el prefijo
-        duplicate_data = df.duplicated(subset=[column_name]).sum()
-        ws.append(["Número de filas duplicadas en la columna '{}': {}".format(column_name, duplicate_data)])
+    for prefix in duplicate_column_prefixes:
+        columns_with_prefix = [col for col in df.columns if col.startswith(prefix)]
+        ws.append(["Columnas que contengan el prefijo '{}' para validar duplicidad".format(prefix)])
         apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
 
-        if duplicate_data > 0:
-            ws.append(["Filas duplicadas en la columna '{}':".format(column_name)])
+        ws.append(columns_with_prefix)
+        apply_styles(ws, ws.max_row, ws.max_row, 1, len(columns_with_prefix))
+
+        for column_name in columns_with_prefix:
+            df[column_name] = df[column_name].astype(str).str.lower()
+            ws.append([])
+
+            # Registro de datos duplicados en cada columna con el prefijo
+            duplicate_data = df.duplicated(subset=[column_name]).sum()
+            ws.append(["Número de filas duplicadas en la columna '{}': {}".format(column_name, duplicate_data)])
             apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
 
-            duplicated_rows = df[df.duplicated(subset=[column_name], keep=False)]
+            if duplicate_data > 0:
+                ws.append(["Filas duplicadas en la columna '{}':".format(column_name)])
+                apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
 
-            headers = list(duplicated_rows.columns)
-            ws.append(headers)
-            apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers), bold=True)
+                duplicated_rows = df[df.duplicated(subset=[column_name], keep=False)]
 
-            for row in duplicated_rows.itertuples(index=False):
-                ws.append(list(row))
-                apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers))
+                headers = list(duplicated_rows.columns)
+                ws.append(headers)
+                apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers), bold=True)
 
-    ws.append([])
+                for row in duplicated_rows.itertuples(index=False):
+                    ws.append(list(row))
+                    apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers))
+
+        ws.append([])
 
     # Autoajustar el ancho de las columnas, exceptuando la primera columna
     auto_adjust_column_width(ws)
 
-def log_numeric_data(df, ws, numeric_column_prefix):
+def log_numeric_data(df, ws, numeric_column_prefixes):
     if df.empty:
         ws.append(["El DataFrame está vacío."])
         return
 
-    # Encontrar columnas con el prefijo especificado
-    columns_with_prefix = [col for col in df.columns if col.startswith(numeric_column_prefix)]
-    ws.append(["Columnas con el prefijo '{}' que deben contener datos numéricos".format(numeric_column_prefix)])
-    apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
-
-    ws.append(columns_with_prefix)
-    apply_styles(ws, ws.max_row, ws.max_row, 1, len(columns_with_prefix))
-
-    for column_name in columns_with_prefix:
-        ws.append([])
-
-        # Verificar si la columna contiene solo datos numéricos
-        non_numeric_data = df[~df[column_name].apply(lambda x: pd.to_numeric(x, errors='coerce')).notnull()]
-        ws.append(["Número de filas con datos no numéricos en la columna '{}': {}".format(column_name, len(non_numeric_data))])
+    for prefix in numeric_column_prefixes:
+        columns_with_prefix = [col for col in df.columns if col.startswith(prefix)]
+        ws.append(["Columnas con el prefijo '{}' que deben contener datos numéricos".format(prefix)])
         apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
 
-        if not non_numeric_data.empty:
-            ws.append(["Filas con datos no numéricos en la columna '{}':".format(column_name)])
+        ws.append(columns_with_prefix)
+        apply_styles(ws, ws.max_row, ws.max_row, 1, len(columns_with_prefix))
+
+        for column_name in columns_with_prefix:
+            ws.append([])
+
+            # Verificar si la columna contiene solo datos numéricos
+            non_numeric_data = df[~df[column_name].apply(lambda x: pd.to_numeric(x, errors='coerce')).notnull()]
+            ws.append(["Número de filas con datos no numéricos en la columna '{}': {}".format(column_name, len(non_numeric_data))])
             apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
 
-            headers = list(non_numeric_data.columns)
-            ws.append(headers)
-            apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers), bold=True)
+            if not non_numeric_data.empty:
+                ws.append(["Filas con datos no numéricos en la columna '{}':".format(column_name)])
+                apply_styles(ws, ws.max_row, ws.max_row, 1, 1, bold=True)
 
-            for row in non_numeric_data.itertuples(index=False):
-                ws.append(list(row))
-                apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers))
+                headers = list(non_numeric_data.columns)
+                ws.append(headers)
+                apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers), bold=True)
 
-    ws.append([])
+                for row in non_numeric_data.itertuples(index=False):
+                    ws.append(list(row))
+                    apply_styles(ws, ws.max_row, ws.max_row, 1, len(headers))
+
+        ws.append([])
 
     # Autoajustar el ancho de las columnas, exceptuando la primera columna
     auto_adjust_column_width(ws)
 
-def process_excel_files_in_folder(folder_path, duplicate_column_prefix, numeric_column_prefix, output_excel_filename):
+def process_excel_files_in_folder(folder_path, duplicate_column_prefixes, numeric_column_prefixes, output_excel_filename):
     excel_files = [f for f in os.listdir(folder_path) if f.endswith('.xlsx') or f.endswith('.xls')]
 
     if not excel_files:
@@ -185,8 +185,8 @@ def process_excel_files_in_folder(folder_path, duplicate_column_prefix, numeric_
             ws = wb.create_sheet(title=sheet_name)
 
             log_null_data(df, ws, excel_file)
-            log_duplicate_data(df, ws, duplicate_column_prefix)
-            log_numeric_data(df, ws, numeric_column_prefix)
+            log_duplicate_data(df, ws, duplicate_column_prefixes)
+            log_numeric_data(df, ws, numeric_column_prefixes)
 
             print(f"Registro completado para '{excel_file}'. Revisa el archivo '{output_excel_filename}' para los detalles.")
         except FileNotFoundError:
@@ -198,19 +198,19 @@ def process_excel_files_in_folder(folder_path, duplicate_column_prefix, numeric_
 
 def main():
     if len(sys.argv) < 5:
-        print("Uso: python programa.py carpeta_de_excel archivo_salida prefijo_duplicados prefijo_numericos")
+        print("Uso: python programa.py carpeta_de_excel archivo_salida prefijos_duplicados prefijos_numericos")
         sys.exit(1)
 
     folder_path = sys.argv[1]
     output_excel_filename = sys.argv[2]
-    duplicate_column_prefix = sys.argv[3]
-    numeric_column_prefix = sys.argv[4]
+    duplicate_column_prefixes = sys.argv[3].split(',')
+    numeric_column_prefixes = sys.argv[4].split(',')
 
     if not os.path.isdir(folder_path):
         print(f"Error: La carpeta '{folder_path}' no existe o no es un directorio.")
         sys.exit(1)
 
-    process_excel_files_in_folder(folder_path, duplicate_column_prefix, numeric_column_prefix, output_excel_filename)
+    process_excel_files_in_folder(folder_path, duplicate_column_prefixes, numeric_column_prefixes, output_excel_filename)
 
 if __name__ == "__main__":
     main()
