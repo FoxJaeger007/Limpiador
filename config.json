@@ -3,7 +3,8 @@
  "comentarios": {
        "descripcion": "Configuración para la limpieza de datos",
        "autor": "Andres Elias Arias",
-       "fecha": "2024-11-27"
+       "fecha": "2024-11-27",
+	"Comentario": "Tener encuenta la rutas ban con doble back slash"
    },
 
 

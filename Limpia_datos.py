@@ -220,7 +220,7 @@ def main():
         print(f"Ocurrió un error: {e}")
 
     print("Script finalizado.")
-    input("Presiona Enter para cerrar...")
+
 
 if __name__ == "__main__":
     main()
