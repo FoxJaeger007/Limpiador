@@ -1,0 +1,15 @@
+
+{
+ "comentarios": {
+       "descripcion": "Configuración para la limpieza de datos",
+       "autor": "Andres Elias Arias",
+       "fecha": "2024-11-27"
+   },
+
+
+
+    "folder_path": "E:\\Prueba de excel",
+    "output_excel_filename": "reporte_salida.xlsx",
+    "duplicate_column_prefixes": ["ID","IN"],
+    "numeric_column_prefixes": ["IN","EN"]
+}

@@ -4,6 +4,7 @@ import os
 import sys
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side
+import json
 
 def apply_styles(ws, min_row, max_row, min_col, max_col, bold=False):
     border = Border(left=Side(style='thin'),
@@ -197,20 +198,29 @@ def process_excel_files_in_folder(folder_path, duplicate_column_prefixes, numeri
     wb.save(output_excel_filename)
 
 def main():
-    if len(sys.argv) < 5:
-        print("Uso: python programa.py carpeta_de_excel archivo_salida prefijos_duplicados prefijos_numericos")
-        sys.exit(1)
+    print("Iniciando script Limpia_datos... utilizando de base el archivo config.json ")
 
-    folder_path = sys.argv[1]
-    output_excel_filename = sys.argv[2]
-    duplicate_column_prefixes = sys.argv[3].split(',')
-    numeric_column_prefixes = sys.argv[4].split(',')
+    try:
+        with open('config.json', 'r') as file:
+            config = json.load(file)
 
-    if not os.path.isdir(folder_path):
-        print(f"Error: La carpeta '{folder_path}' no existe o no es un directorio.")
-        sys.exit(1)
+        folder_path = config['folder_path']
+        output_excel_filename = config['output_excel_filename']
+        duplicate_column_prefixes = config['duplicate_column_prefixes']
+        numeric_column_prefixes = config['numeric_column_prefixes']
 
-    process_excel_files_in_folder(folder_path, duplicate_column_prefixes, numeric_column_prefixes, output_excel_filename)
+        if not os.path.isdir(folder_path):
+            print(f"Error: La carpeta '{folder_path}' no existe o no es un directorio.")
+            sys.exit(1)
+
+        print("Procesando archivos en la carpeta...")
+        process_excel_files_in_folder(folder_path, duplicate_column_prefixes, numeric_column_prefixes, output_excel_filename)
+        print("Procesamiento completado exitosamente.")
+    except Exception as e:
+        print(f"Ocurrió un error: {e}")
+
+    print("Script finalizado.")
+    input("Presiona Enter para cerrar...")
 
 if __name__ == "__main__":
     main()
