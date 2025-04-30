@@ -9,7 +9,7 @@
 
 
 
-    "folder_path": "E:\\Prueba de excel",
+    "folder_path": "E:\\Prueba de excel_Proyecto",
     "output_excel_filename": "reporte_salida.xlsx",
     "duplicate_column_prefixes": ["ID","IN"],
     "numeric_column_prefixes": ["IN","EN"]
